@@ -1,0 +1,96 @@
+---------------------两种dijstra
+#include<bits/stdc++.h>
+using namespace std;
+#define INF 0x3f3f3f3f
+int gcd(int a,int b) {
+	return b==0?a:gcd(b,a%b);
+}
+void dijstra() {
+	int point_num=2021;//点的个数
+	vector<vector<int> > graph(point_num+1,vector<int>(point_num+1,INF));//建立图
+	vector<bool> visit(point_num+1,false);//对所有的点进行分类
+	int cnt=0;//记录主要循环的次数
+	vector<int> dist(point_num+1,INF);
+	dist[1]=0;dist[0]=-1;//点的编号从1开始,0这个点到不了,取一个取不到的值
+	visit[1]=true;//从1点开始
+	//图的初始化
+	for(int i=1; i<=point_num; ++i) {
+		for(int j=1; j<=point_num; ++j) {
+			cnt++;
+			if(i==j) graph[i][j]=0;
+			else if(abs(i-j)<=21) {
+				graph[i][j]=i*j/gcd(i,j);
+				if(i==1) {
+					dist[j]=i*j/gcd(i,j);
+				}
+			}
+		}
+	}
+	//主要循环体
+	//进行n-1次,每进行一次,放入一个点到visit集合
+	for(int k=1; k<point_num; k++) {
+		int min_dist=INF,min_index;
+		//找到离源点最近的点
+		for(int i=1; i<=point_num; ++i) {
+			cnt++;
+			if(visit[i]==false&&dist[i]<min_dist) {
+				min_dist=dist[i];
+				min_index=i;
+			}
+		}
+		//没有找到离源点最近的点,说明图不是强连通的
+		if(min_dist==INF) {
+			cout<<"error"<<endl;return ;
+		}
+		visit[min_index]=true;
+		//通过这个点进行松弛(relax),也就是说通过这个点看能否更新到其他点的最近距离
+		for(int i=1; i<=point_num; ++i) {
+			cnt++;
+			if(graph[min_index][i]!=INF&&dist[i]>dist[min_index]+graph[min_index][i]) {
+				dist[i]=dist[min_index]+graph[min_index][i];
+			}
+		}
+	}
+	cout<<"dijstra:"<<cnt<<"次"<<endl;
+	cout<<dist[2021]<<endl;
+}
+void heap_dijstra() {
+	int point_num=2021;//点的个数
+	vector<vector<int> > graph(point_num+1,vector<int>(point_num+1,INF));//建立图
+	int cnt=0;//记录主要的循环次数
+	vector<int> dist(point_num+1,INF);//源点到其余各个点的最近距离
+	//建立图
+	for(int i=1; i<=point_num; ++i) {
+		for(int j=1; j<=point_num; ++j) {
+			cnt++;
+			if(i==j) graph[i][j]=0;
+			else if(abs(i-j)<=21) {
+				graph[i][j]=i*j/gcd(i,j);
+			}
+		}
+	}
+	//优先级队列,用来取到源点最近距离的点,最小堆
+	priority_queue<pair<int,int>,vector<pair<int,int>>,greater<pair<int,int>>>que;
+	que.push({0,1});
+	dist[1]=0;dist[0]=-1;
+	while(!que.empty()) {
+		auto element=que.top();que.pop();
+		if(dist[element.second]<element.first) continue;
+		//源点到达这个点距离比这个点自身包含到达距离短,说明从其他点松弛到了这个点,舍弃这个点
+		for(int i=1; i<=point_num; ++i) {
+			cnt++;
+			if(dist[i]>element.first+graph[element.second][i]) {
+				dist[i]=element.first+graph[element.second][i];
+				que.push({dist[i],i});
+			}
+		}
+	}
+	cout<<"heap_dijstra:"<<cnt<<"次"<<endl;
+	cout<<dist[2021]<<endl;
+}
+signed main() {
+	ios::sync_with_stdio(0);cin.tie(0);cout.tie(0);
+	heap_dijstra();//堆优化djstra
+	dijstra();//朴素dijstra
+	return 0;
+}
